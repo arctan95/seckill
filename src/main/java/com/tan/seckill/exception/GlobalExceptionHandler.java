@@ -15,7 +15,7 @@ import java.util.List;
  * @ClassName GlobalExceptionHandler
  * @Description 自定义全局异常拦截器
  * @Author tan
- * @Date 2020/4/21 22:45
+ * @Date 2020/4/21 22:46
  * @Version 1.0
  **/
 @ControllerAdvice
