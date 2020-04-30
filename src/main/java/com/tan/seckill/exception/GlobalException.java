@@ -6,7 +6,7 @@ import com.tan.seckill.result.CodeMsg;
  * @ClassName GlobalException
  * @Description 自定义全局异常类
  * @Author tan
- * @Date 2020/4/15 13:35
+ * @Date 2020/4/15 13:34
  * @Version 1.0
  **/
 public class GlobalException extends RuntimeException {
