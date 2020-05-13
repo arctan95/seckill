@@ -6,6 +6,7 @@ import com.tan.seckill.mapper.UserMapper;
 import com.tan.seckill.redis.RedisService;
 import com.tan.seckill.redis.UserKey;
 import com.tan.seckill.result.CodeMsg;
+import com.tan.seckill.util.CookieUtil;
 import com.tan.seckill.util.MD5Util;
 import com.tan.seckill.util.UUIDUtil;
 import com.tan.seckill.vo.LoginVo;
@@ -13,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -31,8 +32,6 @@ public class UserService {
 
     @Autowired
     RedisService redisService;
-
-    public static final String COOKIE_NAME_TOKEN = "token";
 
     public User getById(long id) {
         // 对象缓存
@@ -113,10 +112,7 @@ public class UserService {
      **/
     public void addCookie(HttpServletResponse response, String token, User user) {
         redisService.set(UserKey.token, token, user);
-        Cookie cookie = new Cookie(COOKIE_NAME_TOKEN, token);
-        cookie.setMaxAge(UserKey.token.expireSeconds());
-        cookie.setPath("/");//设置为网站根目录
-        response.addCookie(cookie);
+        CookieUtil.writeCookie(response, token);
     }
 
     /**
@@ -137,5 +133,11 @@ public class UserService {
             addCookie(response, token, user);
         }
         return user;
+    }
+
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        String token = CookieUtil.getCookieValue(request, CookieUtil.COOKIE_NAME_TOKEN);
+        redisService.delete(UserKey.token, token);
+        CookieUtil.delCookie(request,  response);
     }
 }

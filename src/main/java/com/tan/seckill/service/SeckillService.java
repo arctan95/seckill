@@ -5,10 +5,13 @@ import com.tan.seckill.bean.SeckillOrder;
 import com.tan.seckill.bean.User;
 import com.tan.seckill.redis.RedisService;
 import com.tan.seckill.redis.SeckillKey;
+import com.tan.seckill.util.MD5Util;
 import com.tan.seckill.vo.GoodsVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 /**
  * @ClassName SeckillService
@@ -44,6 +47,14 @@ public class SeckillService {
         }
     }
 
+    public boolean checkPath(User user, long goodsId, String path) {
+        if(user == null || path == null) {
+            return false;
+        }
+        String pathOld = redisService.get(SeckillKey.getSeckillPath, ""+user.getId() + "_"+ goodsId, String.class);
+        return path.equals(pathOld);
+    }
+
     public long getSeckillResult(long userId, long goodsId){
         SeckillOrder order = orderService.getOrderByUserIdGoodsId(userId, goodsId);
         if (order != null){
@@ -64,5 +75,14 @@ public class SeckillService {
 
     private boolean getGoodsOver(long goodsId) {
         return redisService.exists(SeckillKey.isGoodsOver, ""+goodsId);
+    }
+
+    public String createSeckillPath(User user, long goodsId) {
+        if(user == null || goodsId <= 0) {
+            return null;
+        }
+        String str = MD5Util.md5(UUID.randomUUID()+"123456");
+        redisService.set(SeckillKey.getSeckillPath, ""+user.getId() + "_"+ goodsId, str);
+        return str;
     }
 }

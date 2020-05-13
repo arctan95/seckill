@@ -59,7 +59,7 @@ public class GoodsController {
      * @param user
      * @return java.lang.String
      **/
-    @RequestMapping(value = "/to_list", produces = "text/html")
+    @RequestMapping(value = "/list", produces = "text/html")
     @ResponseBody
     public String list(HttpServletRequest request, HttpServletResponse response, Model model, User user) {
         // 取缓存
@@ -83,7 +83,7 @@ public class GoodsController {
     }
 
 
-    @RequestMapping(value = "/to_detail2/{goodsId}", produces = "text/html")
+    @RequestMapping(value = "/detail2/{goodsId}", produces = "text/html")
     @ResponseBody
     public String detail2(HttpServletRequest request, HttpServletResponse response, Model model, User user, @PathVariable("goodsId") long goodsId) {
         model.addAttribute("user", user);

@@ -7,21 +7,21 @@ import com.tan.seckill.rabbitmq.MQSender;
 import com.tan.seckill.rabbitmq.SeckillMessage;
 import com.tan.seckill.redis.GoodsKey;
 import com.tan.seckill.redis.RedisService;
+import com.tan.seckill.redis.UserKey;
 import com.tan.seckill.result.CodeMsg;
 import com.tan.seckill.result.Result;
 import com.tan.seckill.service.GoodsService;
 import com.tan.seckill.service.OrderService;
 import com.tan.seckill.service.SeckillService;
+import com.tan.seckill.util.CookieUtil;
 import com.tan.seckill.vo.GoodsVo;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -79,20 +79,39 @@ public class SeckillController implements InitializingBean {
     }
 
     /**
+     * @description 获取秒杀地址
+     * @author tan
+     * @date 2020/5/9 0:20
+     * @param request
+     * @param user
+     * @param goodsId
+     * @return com.tan.seckill.result.Result<java.lang.String>
+     **/
+    @RequestMapping(value = "/path", method = RequestMethod.GET)
+    @ResponseBody
+    public Result<String> getSeckillPath(HttpServletRequest request, User user,
+                                         @RequestParam("goodsId") long goodsId) {
+        if (user == null) {
+            return Result.error(CodeMsg.SESSION_ERROR);
+        }
+        String path = seckillService.createSeckillPath(user, goodsId);
+        return Result.success(path);
+    }
+
+    /**
      * @description GET POST区别
      *      1、GET幂等,服务端获取数据，无论调用多少次结果都一样,不会影响服务端数据
      *      2、POST不幂等，向服务端提交数据，可能会修改服务端数据
      *      将同步下单改为异步下单
      * @author tan
      * @date 2020/4/20 11:13
-     * @param model
      * @param user
      * @param goodsId
      * @return com.tan.seckill.result.Result<java.lang.Integer>
      **/
-    @RequestMapping(value = "/do_seckill", method = RequestMethod.POST)
+    @RequestMapping(value = "/{path}/seckill", method = RequestMethod.POST)
     @ResponseBody
-    public Result<Integer> list(Model model, User user, @RequestParam("goodsId") long goodsId) {
+    public Result<Integer> list(User user, @RequestParam("goodsId") long goodsId, @PathVariable("path") String path) {
         if(!rateLimiter.tryAcquire(1000, TimeUnit.MILLISECONDS)) {
             return Result.error(CodeMsg.ACCESS_LIMIT_REACHED);
         }
@@ -100,7 +119,13 @@ public class SeckillController implements InitializingBean {
         if (user == null) {
             return Result.error(CodeMsg.SESSION_ERROR);
         }
-        model.addAttribute("user", user);
+
+        //验证path
+        boolean check = seckillService.checkPath(user, goodsId, path);
+        if (!check) {
+            return Result.error(CodeMsg.REQUEST_ILLEGAL);
+        }
+
         // 内存标记，减少redis访问
         boolean over = localOverMap.get(goodsId);
         if (over) {

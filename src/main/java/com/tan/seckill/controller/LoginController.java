@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
@@ -21,7 +22,7 @@ import javax.validation.Valid;
  * @Version 1.0
  **/
 @Controller
-@RequestMapping("/login")
+@RequestMapping("/user")
 public class LoginController {
 
     private static Logger log = LoggerFactory.getLogger(LoginController.class);
@@ -29,18 +30,18 @@ public class LoginController {
     @Autowired
     UserService userService;
 
-
-    @RequestMapping("/to_login")
-    public String toLogin() {
-        return "login";
-    }
-
-
-    @RequestMapping("/do_login")
+    @RequestMapping("/login")
     @ResponseBody
     public Result<String> doLogin(HttpServletResponse response, @Valid LoginVo loginVo) {//加入JSR303参数校验
         log.info(loginVo.toString());
         String token = userService.login(response, loginVo);
+        log.info("token:" + token);
         return Result.success(token);
+    }
+
+    @RequestMapping("/logout")
+    public String doLogout(HttpServletRequest request, HttpServletResponse response) {
+        userService.logout(request, response);
+        return "login";
     }
 }

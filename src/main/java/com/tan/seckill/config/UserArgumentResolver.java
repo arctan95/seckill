@@ -3,6 +3,7 @@ package com.tan.seckill.config;
 import com.alibaba.druid.util.StringUtils;
 import com.tan.seckill.bean.User;
 import com.tan.seckill.service.UserService;
+import com.tan.seckill.util.CookieUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Service;
@@ -50,8 +51,8 @@ public class UserArgumentResolver implements HandlerMethodArgumentResolver {
         HttpServletRequest request = nativeWebRequest.getNativeRequest(HttpServletRequest.class);
         HttpServletResponse response = nativeWebRequest.getNativeResponse(HttpServletResponse.class);
 
-        String paramToken = request.getParameter(UserService.COOKIE_NAME_TOKEN);
-        String cookieToken = getCookieValue(request, UserService.COOKIE_NAME_TOKEN);
+        String paramToken = request.getParameter(CookieUtil.COOKIE_NAME_TOKEN);
+        String cookieToken = CookieUtil.getCookieValue(request, CookieUtil.COOKIE_NAME_TOKEN);
         if (StringUtils.isEmpty(cookieToken) && StringUtils.isEmpty(paramToken)) {
             return null;
         }
@@ -59,17 +60,4 @@ public class UserArgumentResolver implements HandlerMethodArgumentResolver {
         return userService.getByToken(response, token);
     }
 
-    //遍历所有cookie，找到需要的那个cookie
-    private String getCookieValue(HttpServletRequest request, String cookiName) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null || cookies.length <= 0) {
-            return null;
-        }
-        for (Cookie cookie : cookies) {
-            if (cookie.getName().equals(cookiName)) {
-                return cookie.getValue();
-            }
-        }
-        return null;
-    }
 }
